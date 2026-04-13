@@ -1,107 +1,123 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import Navbar from "../components/Navbar";
 import UrgentPetCard from "../components/UrgentPetCard";
 import ZoomedOutPetCard from "../components/ZoomedOutPetCard";
 import PetModal from "../components/PetModal";
- 
+
 export default function Dashboard() {
   const carouselRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const [pets, setPets] = useState<any[]>([]);
-  const [selectedPet, setSelectedPet] = useState<any | null>(null);
- 
+  const [isDragging,   setIsDragging]   = useState(false);
+  const [startX,       setStartX]       = useState(0);
+  const [scrollLeft,   setScrollLeft]   = useState(0);
+  const [pets,         setPets]         = useState<any[]>([]);
+  const [selectedPet,  setSelectedPet]  = useState<any | null>(null);
+
   useEffect(() => {
-    const fetchPets = async () => {
-      const querySnapshot = await getDocs(collection(db, "pets"));
-      const petsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setPets(petsData);
-    };
-    fetchPets();
+    // FIX: switched from getDocs (one-time fetch) to onSnapshot (real-time).
+    // This means when an admin approves an application and sets a pet to
+    // "fostered", the user's dashboard updates live without a page reload,
+    // preventing the race where a user could still click a pet that was
+    // just approved for someone else.
+    const unsub = onSnapshot(collection(db, "pets"), (snapshot) => {
+      setPets(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsub();
   }, []);
- 
-  const urgentPets = pets.filter(pet => pet.isUrgent);
+
+  const urgentPets  = pets.filter(pet => pet.isUrgent);
   const regularPets = pets.filter(pet => !pet.isUrgent);
- 
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!carouselRef.current) return;
-    setIsDragging(true);
+    setIsDragging(false); // reset — only set true on actual movement
     setStartX(e.pageX - carouselRef.current.offsetLeft);
     setScrollLeft(carouselRef.current.scrollLeft);
   };
+
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !carouselRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - carouselRef.current.offsetLeft;
-    const walk = (x - startX) * 2;
-    carouselRef.current.scrollLeft = scrollLeft - walk;
+    if (!startX || !carouselRef.current) return;
+    const x    = e.pageX - carouselRef.current.offsetLeft;
+    const walk = Math.abs(x - startX);
+    if (walk > 5) setIsDragging(true); // threshold prevents click-as-drag
+    const scrollWalk = (x - startX) * 2;
+    carouselRef.current.scrollLeft = scrollLeft - scrollWalk;
   };
- 
+
   const handlePetClick = (pet: any) => {
-    // Don't open modal if currently dragging or pet is already fostered
     if (isDragging || pet.status === "fostered") return;
     setSelectedPet(pet);
   };
- 
+
   return (
     <main className="min-h-screen bg-[#F5F5EC] text-[#1E1E1E] pb-20 relative">
       <Navbar />
-      <PetModal isOpen={!!selectedPet} onClose={() => setSelectedPet(null)} pet={selectedPet} />
- 
-      <div className="px-12 py-4 flex justify-between border-b-2 border-t-2 border-[#D9D9D9] mb-12">
-        <input type="text" placeholder="SEARCH PETS BY NAME, BREED OR LOCATION..." className="bg-transparent outline-none w-1/2 text-xs font-bold tracking-widest uppercase placeholder:text-[#1E1E1E]/50" />
-        <div className="flex gap-4 text-xs font-bold tracking-widest">
-          <button className="border-2 border-[#D9D9D9] bg-white px-6 py-1 rounded-full">FILTER</button>
-          <button className="border-2 border-[#D9D9D9] bg-white px-6 py-1 rounded-full">SORT: RECENTLY ADDED</button>
-        </div>
-      </div>
- 
-      <div className="flex flex-col gap-16">
-        <section className="w-full">
-          <h2 className="px-12 text-sm font-bold mb-4 uppercase tracking-widest">Urgent Foster Cases</h2>
-          <div className="w-full bg-[#FCEAEB] py-8 pl-12 border-y border-[#D9D9D9]/50">
+      <PetModal
+        isOpen={!!selectedPet}
+        onClose={() => setSelectedPet(null)}
+        pet={selectedPet}
+      />
+
+      <div className="px-12 pt-4">
+
+        {/* Urgent pets carousel */}
+        {urgentPets.length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-[#E22726] text-xs font-bold uppercase tracking-[0.2em]">Urgent</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
             <div
               ref={carouselRef}
+              className="flex gap-6 overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing"
               onMouseDown={handleMouseDown}
-              onMouseLeave={() => setIsDragging(false)}
-              onMouseUp={() => setIsDragging(false)}
               onMouseMove={handleMouseMove}
-              className={`flex gap-6 overflow-x-auto pb-4 pr-12 select-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${isDragging ? "cursor-grabbing" : "cursor-grab snap-x snap-mandatory"}`}
+              onMouseUp={() => setIsDragging(false)}
+              onMouseLeave={() => setIsDragging(false)}
             >
               {urgentPets.map(pet => (
                 <div
                   key={pet.id}
                   onClick={() => handlePetClick(pet)}
-                  className={`relative ${pet.status === "fostered" ? "cursor-not-allowed" : "cursor-pointer"}`}
+                  className="flex-shrink-0 cursor-pointer"
                 >
-                  <UrgentPetCard name={pet.name} location={pet.location} time={pet.age || pet.duration} image={pet.image || "/jonnie.png"} />
-                  {pet.status === "fostered" && (
-                    <div className="absolute inset-0 bg-black/50 rounded-[2rem] flex items-center justify-center">
-                      <span className="text-white text-[11px] font-bold uppercase tracking-widest bg-[#E22726] px-4 py-2 rounded-full">
-                        In Foster Home
-                      </span>
-                    </div>
-                  )}
+                  <UrgentPetCard
+                    name={pet.name}
+                    age={pet.age}
+                    breed={pet.breed}
+                    image={pet.image || "/jonnie.png"}
+                  />
                 </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* All pets grid */}
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-[#E22726] text-xs font-bold uppercase tracking-[0.2em]">All Pets</span>
+            <div className="flex-1 h-px bg-gray-200" />
           </div>
-        </section>
- 
-        <section className="px-12">
-          <h2 className="text-sm font-bold mb-6 uppercase tracking-widest">Find Your Next Friend</h2>
-          <div className="grid grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
             {regularPets.map(pet => (
               <div
                 key={pet.id}
                 onClick={() => handlePetClick(pet)}
-                className={`relative transition-transform ${pet.status === "fostered" ? "cursor-not-allowed" : "cursor-pointer hover:scale-[1.02]"}`}
+                className={`relative rounded-3xl transition-transform ${
+                  pet.status === "fostered"
+                    ? "cursor-not-allowed"
+                    : "cursor-pointer hover:scale-[1.02]"
+                }`}
               >
-                <ZoomedOutPetCard name={pet.name} age={pet.age} breed={pet.breed} image={pet.image || "/jonnie.png"} />
+                <ZoomedOutPetCard
+                  name={pet.name}
+                  age={pet.age}
+                  breed={pet.breed}
+                  image={pet.image || "/jonnie.png"}
+                />
                 {pet.status === "fostered" && (
                   <div className="absolute inset-0 bg-black/50 rounded-3xl flex items-center justify-center">
                     <span className="text-white text-[11px] font-bold uppercase tracking-widest bg-[#E22726] px-4 py-2 rounded-full">
