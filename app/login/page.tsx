@@ -11,25 +11,6 @@ import { Irish_Grover, Bree_Serif } from "next/font/google";
 const irishGrover = Irish_Grover({ weight: "400", subsets: ["latin"] });
 const breeSerif = Bree_Serif({ weight: "400", subsets: ["latin"] });
  
-/**
- * WHY THIS FILE CHANGED
- * ──────────────────────
- * The original login had two problems:
- *
- * 1. After signInWithEmailAndPassword succeeds, it called router.push()
- *    immediately. But Firebase auth state is async — sometimes the
- *    onAuthStateChanged listener elsewhere in the app fires AFTER the
- *    route change, causing a redirect loop or a flash of the login page.
- *
- * 2. There was no session cookie, so middleware couldn't protect routes.
- *    Anyone could type /UserCalendar in the URL bar and access it.
- *
- * The fix:
- *   After Firebase auth succeeds, we call our own API route
- *   (POST /api/auth/session) which sets an HTTP-only cookie.
- *   THEN we navigate. Middleware reads that cookie on every subsequent
- *   request and enforces access before any React code runs.
- */
  
 export default function LoginPage() {
   const router = useRouter();

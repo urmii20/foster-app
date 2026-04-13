@@ -8,19 +8,6 @@ import { Irish_Grover, Bree_Serif } from "next/font/google";
 const irishGrover = Irish_Grover({ weight: "400", subsets: ["latin"] });
 const breeSerif = Bree_Serif({ weight: "400", subsets: ["latin"] });
  
-/**
- * WHY THIS FILE CHANGED
- * ──────────────────────
- * Same root problem as the user login — no session cookie, so middleware
- * had nothing to read. Anyone who knew the URL could access shelter routes.
- *
- * This page sets role="shelter_admin" in the session cookie.
- * Middleware sees that role and blocks regular users from /shelter/* routes.
- *
- * The shelter login intentionally has NO sign-up option — shelter accounts
- * are created manually by the system administrator in Firebase Console.
- * This prevents anyone from self-registering as a shelter admin.
- */
  
 export default function ShelterLogin() {
   const [email, setEmail] = useState("");

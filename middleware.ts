@@ -1,33 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
  
-/**
- * MIDDLEWARE — runs on every request BEFORE the page renders.
- *
- * Why middleware and not component-level useEffect?
- * ─────────────────────────────────────────────────
- * A useEffect auth-check lets the page render first, THEN redirects.
- * The user sees a flash of private content — or worse, the content loads
- * fully before the redirect fires. Middleware runs at the Edge, before
- * any HTML is sent, so the redirect is invisible and instant.
- *
- * How the session works:
- * ─────────────────────
- * When the user logs in (login/page.tsx or shelter/login/page.tsx),
- * we call our own API route /api/auth/session which sets an HTTP-only
- * cookie called __session containing:
- *   { uid, role: "user" | "shelter_admin" }
- * (encoded as a signed JWT — see /api/auth/session/route.ts)
- *
- * Middleware reads this cookie. No Firebase SDK needed here — we just
- * decode the JWT. This is intentional: middleware runs on the Edge
- * runtime which can't use the Firebase Admin SDK.
- */
  
 // ── Route configuration ──────────────────────────────────────────────────────
  
 /** Routes that only a logged-in USER (role="user") may access */
-const USER_ROUTES = ["/UserCalendar", "/dashboard"];
+const USER_ROUTES = ["/UserCalendar", "/dashboard", "/blogs"];
  
 /** Routes that only a SHELTER ADMIN (role="shelter_admin") may access */
 const SHELTER_ROUTES = ["/shelter/dashboard", "/shelter/Inbox", "/shelter/Inventory", "/shelter/active-fosters", "/shelter/foster-setup"];
