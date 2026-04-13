@@ -1,44 +1,53 @@
 "use client";
 import { useState } from "react";
-import { auth } from "../../../lib/firebase";
+import { auth, db } from "../../../lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { Irish_Grover, Bree_Serif } from "next/font/google";
- 
+
 const irishGrover = Irish_Grover({ weight: "400", subsets: ["latin"] });
 const breeSerif = Bree_Serif({ weight: "400", subsets: ["latin"] });
- 
- 
+
 export default function ShelterLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
- 
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
- 
+
     try {
       // Step 1: Firebase authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
- 
-      // Step 2: Set session cookie with shelter_admin role
-      // Middleware uses this role to block regular users from /shelter/* routes.
+
+      // Step 2: FIX — Verify this user is actually a shelter admin in Firestore
+      const adminDoc = await getDoc(doc(db, "shelter_admins", uid));
+      if (!adminDoc.exists()) {
+        // Not an admin — sign out and block
+        await auth.signOut();
+        setError("This account is not registered as a shelter administrator.");
+        setLoading(false);
+        return;
+      }
+
+      // Step 3: Set session cookie with shelter_admin role
       const res = await fetch("/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid, role: "shelter_admin" }),
       });
- 
+
       if (!res.ok) throw new Error("Failed to create session");
- 
-      // Step 3: Navigate AFTER cookie is set
+
+      // Step 4: Navigate AFTER cookie is set
       router.push("/shelter/dashboard");
- 
+
     } catch (err: any) {
       if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
         setError("Invalid credentials. Please try again.");
@@ -46,6 +55,8 @@ export default function ShelterLogin() {
         setError("No shelter account found with this email.");
       } else if (err.code === "auth/too-many-requests") {
         setError("Too many failed attempts. Please wait a few minutes.");
+      } else if (err.message?.includes("not registered")) {
+        // Already handled above, but just in case
       } else {
         setError("Something went wrong. Please try again.");
         console.error(err);
@@ -54,16 +65,16 @@ export default function ShelterLogin() {
       setLoading(false);
     }
   };
- 
+
   return (
     <main className={`min-h-screen bg-[#F5F5EC] flex items-center justify-center p-6 ${breeSerif.className} font-normal`}>
       <div className="w-full max-w-lg bg-white rounded-[3rem] p-12 shadow-xl border border-gray-100">
- 
+
         <header className="text-center mb-10">
           <span className="text-[#E22726] text-[14px] uppercase tracking-[0.3em]">Staff Access</span>
           <h1 className={`${irishGrover.className} text-5xl text-[#1E1E1E] mt-4`}>SHELTER LOGIN</h1>
         </header>
- 
+
         <form onSubmit={handleLogin} className="space-y-8">
           <div>
             <label className="block text-[16px] uppercase tracking-widest text-black mb-3 ml-2">
@@ -79,7 +90,7 @@ export default function ShelterLogin() {
               required
             />
           </div>
- 
+
           <div>
             <label className="block text-[16px] uppercase tracking-widest text-black mb-3 ml-2">
               Password
@@ -94,11 +105,11 @@ export default function ShelterLogin() {
               required
             />
           </div>
- 
+
           {error && (
             <p className="text-[#E22726] text-sm text-center font-bold">{error}</p>
           )}
- 
+
           <button
             type="submit"
             disabled={loading}
@@ -111,7 +122,7 @@ export default function ShelterLogin() {
             {loading ? "Verifying..." : "Enter Shelter"}
           </button>
         </form>
- 
+
         <p className="text-center mt-10 text-gray-400 text-sm">
           Forgot password? Contact system administrator.
         </p>

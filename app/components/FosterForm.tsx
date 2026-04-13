@@ -2,70 +2,72 @@
 import { useState, useEffect } from "react";
 import { Bree_Serif, Irish_Grover } from "next/font/google";
 import { db, auth } from "../../lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { useRouter } from "next/navigation";
- 
+
 const breeSerif = Bree_Serif({ weight: "400", subsets: ["latin"] });
 const irishGrover = Irish_Grover({ weight: "400", subsets: ["latin"] });
- 
+
 const STEP_TITLES = ["Personal Info", "Home Life", "Suitability", "Confirmation"];
- 
+
 const INITIAL_FORM = {
   fullName: "", phone: "", email: "", location: "",
   residence: "House", ownRent: "Own", otherPets: "", children: "None",
   experience: "No", whyFoster: "", duration: "Flexible",
   confirmExpenses: false, confirmMedical: false, confirmAgreement: false,
 };
- 
-const Input = ({ label, type = "text", value, onChange, placeholder = "" }) => (
+
+const Input = ({ label, type = "text", value, onChange, placeholder = "" }: any) => (
   <div>
     <label className="block text-[12px] uppercase tracking-widest text-[1E1E1E] mb-2 ml-1">{label}</label>
-    <input type={type} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)}
+    <input type={type} value={value} placeholder={placeholder} onChange={(e: any) => onChange(e.target.value)}
       className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-sm focus:border-[#35D0E6] outline-none transition-all shadow-sm" />
   </div>
 );
- 
-const Select = ({ label, options, value, onChange }) => (
+
+const Select = ({ label, options, value, onChange }: any) => (
   <div className="flex-1">
     <label className="block text-[12px] uppercase tracking-widest text-[1E1E1E] mb-2 ml-1">{label}</label>
-    <select value={value} onChange={(e) => onChange(e.target.value)}
+    <select value={value} onChange={(e: any) => onChange(e.target.value)}
       className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-sm outline-none shadow-sm cursor-pointer">
-      {options.map(o => <option key={o} value={o}>{o}</option>)}
+      {options.map((o: string) => <option key={o} value={o}>{o}</option>)}
     </select>
   </div>
 );
- 
-const Checkbox = ({ label, checked, onChange }) => (
+
+const Checkbox = ({ label, checked, onChange }: any) => (
   <label className="flex items-center gap-4 cursor-pointer group">
-    <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${checked ? "bg-[#E22726] border-[#E22726]" : "border-gray-200 group-hover:border-gray-400"}`}>
+    <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${checked ?
+      "bg-[#E22726] border-[#E22726]" : "border-gray-200 group-hover:border-gray-400"}`}>
       {checked && <span className="text-white text-[10px]">✓</span>}
     </div>
-    <input type="checkbox" className="hidden" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+    <input type="checkbox" className="hidden" checked={checked} onChange={(e: any) => onChange(e.target.checked)} />
     <span className="text-xs text-gray-700 font-medium tracking-wide">{label}</span>
   </label>
 );
- 
-export default function FosterForm({ isOpen, onClose, pet }) {
+
+export default function FosterForm({ isOpen, onClose, pet }: any) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState(INITIAL_FORM);
- 
-  useEffect(() => { if (isOpen) { setStep(1); setIsSuccess(false); } }, [isOpen]);
- 
+  const [duplicateError, setDuplicateError] = useState(false);
+
+  useEffect(() => { if (isOpen) { setStep(1); setIsSuccess(false); setDuplicateError(false); } }, [isOpen]);
+
   // Auth check — if not logged in, close form and redirect to /login
   useEffect(() => {
     if (isOpen && !auth.currentUser) {
       onClose();
       router.push("/login");
     }
-  }, [isOpen]);
- 
+  }, [isOpen, onClose, router]);
+
   if (!isOpen) return null;
- 
-  const set = (key) => (val) => setFormData(f => ({ ...f, [key]: val }));
- 
+
+  const set = (key: string) => (val: any) => setFormData((f: any) => ({ ...f, [key]: val }));
+
   const validateAndNext = () => {
     if (step === 1 && (!formData.fullName.trim() || !formData.phone.trim()))
       return alert("Please fill in all contact details.");
@@ -73,14 +75,29 @@ export default function FosterForm({ isOpen, onClose, pet }) {
       return alert("Please mention if you have other pets (or type 'None').");
     setStep(s => s + 1);
   };
- 
+
   const handleSubmit = async () => {
     if (!formData.confirmAgreement) return alert("You must agree to the terms to submit.");
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      // auth.currentUser is guaranteed here because of the check above
       const userId = auth.currentUser!.uid;
- 
+
+      /* ── FIX: check for duplicate application ────────────────────── */
+      const dupQuery = query(
+        collection(db, "foster_applications"),
+        where("userId", "==", userId),
+        where("petId", "==", pet.id),
+        where("status", "in", ["pending", "approved"])
+      );
+      const dupSnap = await getDocs(dupQuery);
+      if (!dupSnap.empty) {
+        setDuplicateError(true);
+        setIsSubmitting(false);
+        return;
+      }
+      /* ─────────────────────────────────────────────────────────────── */
+
       await addDoc(collection(db, "foster_applications"), {
         ...formData,
         userId,
@@ -97,7 +114,23 @@ export default function FosterForm({ isOpen, onClose, pet }) {
       setIsSubmitting(false);
     }
   };
- 
+
+  /* ── Duplicate error screen ────────────────────────────────────── */
+  if (duplicateError) return (
+    <div className="fixed inset-0 z-[70] flex justify-end bg-black/60 backdrop-blur-md">
+      <div className="w-full max-w-md bg-[#F5F5EC] h-full p-10 flex flex-col items-center justify-center text-center shadow-2xl">
+        <div className="w-24 h-24 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center text-4xl mb-8">⚠️</div>
+        <h2 className={`${irishGrover.className} text-3xl text-[#1E1E1E] mb-4`}>Already Applied</h2>
+        <p className={`${breeSerif.className} text-gray-600 mb-10 leading-relaxed text-lg`}>
+          You already have an active or pending application for <strong>{pet.name}</strong>.
+        </p>
+        <button onClick={onClose} className="w-full py-5 bg-[#1E1E1E] text-white rounded-2xl uppercase tracking-[0.2em] font-bold hover:bg-[#E22726] transition-all">
+          Back to Dashboard
+        </button>
+      </div>
+    </div>
+  );
+
   if (isSuccess) return (
     <div className="fixed inset-0 z-[70] flex justify-end bg-black/60 backdrop-blur-md">
       <div className="w-full max-w-md bg-[#F5F5EC] h-full p-10 flex flex-col items-center justify-center text-center shadow-2xl">
@@ -112,11 +145,11 @@ export default function FosterForm({ isOpen, onClose, pet }) {
       </div>
     </div>
   );
- 
+
   return (
     <div className="fixed inset-0 z-[60] flex justify-end bg-black/40 backdrop-blur-sm" onClick={onClose}>
       <div className="w-full max-w-md bg-[#F5F5EC] h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500" onClick={e => e.stopPropagation()}>
- 
+
         <div className="p-8 border-b border-gray-200 bg-white">
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -129,7 +162,7 @@ export default function FosterForm({ isOpen, onClose, pet }) {
             <div className="h-full bg-[#E22726] transition-all duration-700 ease-in-out" style={{ width: `${(step / 4) * 100}%` }} />
           </div>
         </div>
- 
+
         <div className={`flex-1 overflow-y-auto px-8 py-10 ${breeSerif.className}`}>
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {step === 1 && (
@@ -173,7 +206,7 @@ export default function FosterForm({ isOpen, onClose, pet }) {
             )}
           </div>
         </div>
- 
+
         <div className="p-8 border-t border-gray-200 bg-white flex gap-4">
           {step > 1 && (
             <button onClick={() => setStep(s => s - 1)} className="flex-1 py-4 border border-gray-200 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-gray-50 transition-all">Back</button>

@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import Navbar from "../components/Navbar";
 import UrgentPetCard from "../components/UrgentPetCard";
 import ZoomedOutPetCard from "../components/ZoomedOutPetCard";
 import PetModal from "../components/PetModal";
- 
+
 export default function Dashboard() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -14,19 +14,29 @@ export default function Dashboard() {
   const [scrollLeft, setScrollLeft] = useState(0);
   const [pets, setPets] = useState<any[]>([]);
   const [selectedPet, setSelectedPet] = useState<any | null>(null);
- 
+  const [error, setError] = useState<string | null>(null);
+
+  /* ── FIX: getDocs → onSnapshot for real-time updates ─────────────── */
   useEffect(() => {
-    const fetchPets = async () => {
-      const querySnapshot = await getDocs(collection(db, "pets"));
-      const petsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setPets(petsData);
-    };
-    fetchPets();
+    const unsubscribe = onSnapshot(
+      collection(db, "pets"),
+      (snapshot) => {
+        const petsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setPets(petsData);
+        setError(null);
+      },
+      (err) => {
+        console.error("Dashboard pets listener error:", err);
+        setError("Connection lost. Data may be stale.");
+      }
+    );
+    return () => unsubscribe();
   }, []);
- 
+  /* ─────────────────────────────────────────────────────────────────── */
+
   const urgentPets = pets.filter(pet => pet.isUrgent);
   const regularPets = pets.filter(pet => !pet.isUrgent);
- 
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!carouselRef.current) return;
     setIsDragging(true);
@@ -40,18 +50,24 @@ export default function Dashboard() {
     const walk = (x - startX) * 2;
     carouselRef.current.scrollLeft = scrollLeft - walk;
   };
- 
+
   const handlePetClick = (pet: any) => {
-    // Don't open modal if currently dragging or pet is already fostered
     if (isDragging || pet.status === "fostered") return;
     setSelectedPet(pet);
   };
- 
+
   return (
     <main className="min-h-screen bg-[#F5F5EC] text-[#1E1E1E] pb-20 relative">
       <Navbar />
       <PetModal isOpen={!!selectedPet} onClose={() => setSelectedPet(null)} pet={selectedPet} />
- 
+
+      {/* FIX: error banner for disconnect resilience */}
+      {error && (
+        <div className="mx-12 mb-4 p-4 bg-red-100 border border-red-300 text-red-800 rounded-2xl text-sm font-bold uppercase tracking-widest text-center">
+          {error}
+        </div>
+      )}
+
       <div className="px-12 py-4 flex justify-between border-b-2 border-t-2 border-[#D9D9D9] mb-12">
         <input type="text" placeholder="SEARCH PETS BY NAME, BREED OR LOCATION..." className="bg-transparent outline-none w-1/2 text-xs font-bold tracking-widest uppercase placeholder:text-[#1E1E1E]/50" />
         <div className="flex gap-4 text-xs font-bold tracking-widest">
@@ -59,7 +75,7 @@ export default function Dashboard() {
           <button className="border-2 border-[#D9D9D9] bg-white px-6 py-1 rounded-full">SORT: RECENTLY ADDED</button>
         </div>
       </div>
- 
+
       <div className="flex flex-col gap-16">
         <section className="w-full">
           <h2 className="px-12 text-sm font-bold mb-4 uppercase tracking-widest">Urgent Foster Cases</h2>
@@ -91,7 +107,7 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
- 
+
         <section className="px-12">
           <h2 className="text-sm font-bold mb-6 uppercase tracking-widest">Find Your Next Friend</h2>
           <div className="grid grid-cols-3 gap-8">
