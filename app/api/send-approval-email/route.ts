@@ -1,11 +1,5 @@
-/**
- * POST /api/send-approval-email
- * Called from the Shelter Inbox when an application is approved.
- *
- * Body: { toEmail, userName, petName, startDate, endDate, shelterPhone, tasks[] }
- */
-
 import { NextRequest, NextResponse } from "next/server";
+import nodemailer from "nodemailer";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,13 +17,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "toEmail and petName required" }, { status: 400 });
     }
 
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-      console.warn("RESEND_API_KEY not set — email not sent");
+    const gmailUser = process.env.GMAIL_USER;
+    const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
+
+    if (!gmailUser || !gmailAppPassword) {
+      console.warn("Missing GMAIL_USER or GMAIL_APP_PASSWORD — approval email not sent");
       return NextResponse.json({ success: true, skipped: true });
     }
 
-    const fromEmail = process.env.FROM_EMAIL || "noreply@pawsheltermumbai.in";
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: gmailUser,
+        pass: gmailAppPassword,
+      },
+    });
 
     const taskList = (tasks as string[])
       .map((t) => `<li style="margin-bottom:8px;">${t}</li>`)
@@ -86,27 +88,16 @@ export async function POST(req: NextRequest) {
       </div>
     `;
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: `Paw Shelter Mumbai <${fromEmail}>`,
-        to: [toEmail],
-        subject: `✅ Your Foster Application for ${petName} is Approved!`,
-        html,
-      }),
-    });
+    const mailOptions = {
+      from: `"Paw Shelter Mumbai" <${gmailUser}>`,
+      to: toEmail,
+      subject: `✅ Your Foster Application for ${petName} is Approved!`,
+      html,
+    };
 
-    if (!res.ok) {
-      const err = await res.text();
-      console.error("Resend error:", err);
-      return NextResponse.json({ error: "Email send failed" }, { status: 500 });
-    }
-
+    await transporter.sendMail(mailOptions);
     return NextResponse.json({ success: true });
+
   } catch (err) {
     console.error("send-approval-email error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
