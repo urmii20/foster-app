@@ -7,20 +7,6 @@ import ShelterModal from "../components/ShelterModal";
 const breeSerif = Bree_Serif({ weight: "400", subsets: ["latin"] });
 const irishGrover = Irish_Grover({ weight: "400", subsets: ["latin"] });
 
-/**
- * FIX LOG
- * ───────
- * NEW — Added TypeScript types for props (was implicit any).
- *
- * NEW — Added a safety check: if pet.status becomes "fostered" while the
- *       modal is open (e.g. another user's application was approved), the
- *       "Foster" button is disabled and shows "In Foster Home" instead.
- *       This prevents the form from opening for an already-fostered pet.
- *
- * NEW — Flip state resets when the modal opens for a different pet,
- *       preventing stale UI from the previous pet's card.
- */
-
 const STEPS = [
   { step: "1", title: "APPLY", desc: "FILL OUT A FORM" },
   { step: "2", title: "REVIEW", desc: "WE CHECK COMPATIBILITY" },
@@ -39,7 +25,6 @@ export default function PetModal({ isOpen, onClose, pet }: PetModalProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isShelterModalOpen, setIsShelterModalOpen] = useState(false);
 
-  // Reset flip state when modal opens/closes or pet changes
   useEffect(() => {
     if (isOpen) {
       setIsFlipped(false);
@@ -57,7 +42,6 @@ export default function PetModal({ isOpen, onClose, pet }: PetModalProps) {
   };
 
   const handleFosterClick = () => {
-    // Safety check: don't open form if pet was fostered while modal was open
     if (isFostered) return;
     setIsFormOpen(true);
   };
@@ -94,25 +78,25 @@ export default function PetModal({ isOpen, onClose, pet }: PetModalProps) {
 
             <div className="absolute top-0 left-[42%] right-0 bottom-[80px] pl-12 pr-8 flex flex-col justify-center">
               {!isFlipped && (
-                <div className="absolute top-6 right-6 w-32 h-32 z-30 pointer-events-none">
+                <div className="absolute top-6 right-6 w-36 h-36 z-30 pointer-events-none">
                   {pet.isVaccinated && (
                     <img
                       src="/vaccinated.png"
-                      className="absolute top-0 right-0 w-24 h-24 object-contain rotate-[12deg]"
+                      className="absolute top-0 right-0 w-28 h-28 object-contain rotate-[12deg]"
                       alt="Vaccinated"
                     />
                   )}
                   {pet.isSpayed && (
                     <img
                       src="/spayed.png"
-                      className="absolute top-2 right-4 w-24 h-24 object-contain rotate-[-10deg]"
+                      className="absolute top-2 right-4 w-28 h-28 object-contain rotate-[-10deg]"
                       alt="Spayed"
                     />
                   )}
                   {pet.isNeutered && (
                     <img
                       src="/neutered.png"
-                      className="absolute top-1 right-2 w-24 h-24 object-contain rotate-[5deg]"
+                      className="absolute top-1 right-2 w-28 h-28 object-contain rotate-[5deg]"
                       alt="Neutered"
                     />
                   )}
@@ -162,7 +146,13 @@ export default function PetModal({ isOpen, onClose, pet }: PetModalProps) {
                   FOSTER {pet.name}
                 </button>
               )}
-              <button className="flex-1 bg-[#FEA8B3]/68 text-[#FFFFFF] rounded-t-[1.5rem] text-[14px] tracking-widest uppercase hover:bg-[#E2455A]/70 transition">
+              <button
+                className="flex-1 bg-[#FEA8B3]/68 text-[#FFFFFF] rounded-t-[1.5rem] text-[14px] tracking-widest uppercase hover:bg-[#E2455A]/70 transition"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open("/about#contact", "_blank");
+                }}
+              >
                 ADOPTION ENQUIRY
               </button>
             </div>
@@ -233,10 +223,22 @@ export default function PetModal({ isOpen, onClose, pet }: PetModalProps) {
 
               {/* Back bottom buttons */}
               <div className="absolute bottom-0 left-0 right-0 h-[64px] flex justify-center gap-6">
-                <button className="w-[260px] bg-[#FEA8B3]/68 text-[#FFFFFF] rounded-t-[1.25rem] text-[12px] uppercase hover:bg-[#E2455A]/70 transition">
+                <button
+                  className="w-[260px] bg-[#FEA8B3]/68 text-[#FFFFFF] rounded-t-[1.25rem] text-[12px] uppercase hover:bg-[#E2455A]/70 transition"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open("/blogs", "_blank");
+                  }}
+                >
                   REQUIREMENTS
                 </button>
-                <button className="w-[260px] bg-[#E22726] text-white rounded-t-[1.25rem] text-[12px] uppercase hover:bg-[#A91E1E] transition">
+                <button
+                  className="w-[260px] bg-[#E22726] text-white rounded-t-[1.25rem] text-[12px] uppercase hover:bg-[#A91E1E] transition"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open("/about#contact", "_blank");
+                  }}
+                >
                   CONTACT US
                 </button>
               </div>

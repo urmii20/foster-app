@@ -127,9 +127,9 @@ function SetupFosterModal({
               Start Date *
             </label>
             <input
-              type="date"
-              className="w-full p-4 rounded-2xl border-2 border-[#D9D9D9] mt-1 bg-white focus:border-[#E22726] outline-none"
-              onChange={(e) => setDates({ ...dates, start: e.target.value })}
+            type="date"
+            className="w-full p-4 rounded-2xl border-2 border-[#D9D9D9] mt-1 bg-white text-[#1E1E1E] focus:border-[#E22726] outline-none"
+            onChange={(e) => setDates({ ...dates, start: e.target.value })}
             />
           </div>
 
@@ -138,9 +138,9 @@ function SetupFosterModal({
               End Date (Optional)
             </label>
             <input
-              type="date"
-              className="w-full p-4 rounded-2xl border-2 border-[#D9D9D9] mt-1 bg-white focus:border-[#E22726] outline-none"
-              onChange={(e) => setDates({ ...dates, end: e.target.value })}
+            type="date"
+            className="w-full p-4 rounded-2xl border-2 border-[#D9D9D9] mt-1 bg-white text-[#1E1E1E] focus:border-[#E22726] outline-none"
+            onChange={(e) => setDates({ ...dates, end: e.target.value })}
             />
           </div>
 
@@ -150,7 +150,7 @@ function SetupFosterModal({
             </label>
             <div className="flex gap-2 mt-2">
               <input
-                className="flex-1 p-4 rounded-2xl border-2 border-[#D9D9D9] text-sm bg-white focus:border-[#E22726] outline-none"
+                className="flex-1 p-4 rounded-2xl border-2 border-[#D9D9D9] text-sm bg-white text-[#1E1E1E] focus:border-[#E22726] outline-none"
                 placeholder="e.g. Vet check-up on Day 1"
                 value={taskInput}
                 onChange={(e) => setTaskInput(e.target.value)}
