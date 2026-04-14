@@ -42,7 +42,7 @@ export default function ShelterSidebar() {
     }
 
     // 3. Redirect to login
-    router.push("/shelter/login");
+    router.push("/login");
   };
 
   const menuItems = [
