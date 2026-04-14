@@ -306,7 +306,8 @@ export default function LoginPage() {
               setScreen("user");
               setError("");
             }}
-            className="w-full py-4 bg-[#1E1E1E] text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-[#E22726] transition"
+            // AFTER
+            className="w-full p-4 bg-[#F5F5EC] border-2 border-[#D9D9D9] rounded-2xl text-sm text-[#1E1E1E] placeholder:text-[#888] focus:border-[#E22726] outline-none transition"
           >
             Back to Login
           </button>

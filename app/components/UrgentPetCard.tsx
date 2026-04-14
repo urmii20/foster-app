@@ -1,9 +1,20 @@
 import { Bree_Serif } from "next/font/google";
 const breeSerif = Bree_Serif({ weight: "400", subsets: ["latin"] });
 
+function formatAge(age: string | number): string {
+  if (!age && age !== 0) return "";
+  const num = parseFloat(String(age));
+  if (isNaN(num)) return String(age); // already text like "2 years"
+  if (num < 1) {
+    const months = Math.round(num * 12);
+    return months <= 1 ? "1 month old" : `${months} months old`;
+  }
+  return num === 1 ? "1 year old" : `${num} years old`;
+}
+
 export default function UrgentPetCard({ name, location, time, image }) {
   return (
-    <div className="min-w-[280px] w-[280px] shrink-0 flex flex-col rounded-[2rem] overflow-hidden bg-[#F7E7E7] border-2 border-[#D9D9D9] snap-start">
+    <div className="min-w-[280px] w-[280px] shrink-0 flex flex-col rounded-[2rem] overflow-hidden bg-white border-2 border-[#D9D9D9] snap-start">
       <div className="relative h-[220px] w-full bg-gray-200">
         <img src={image} alt={name} className="w-full h-full object-cover" />
         <div className="absolute bottom-3 right-3 bg-[#E22726] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border-2 border-white shadow-sm">
@@ -21,7 +32,7 @@ export default function UrgentPetCard({ name, location, time, image }) {
           </svg>
           <span>{location}</span>
           <span className="text-[#E22726] text-[8px]">▼</span>
-          <span>{time}</span>
+          <span>{formatAge(time)}</span>
         </div>
       </div>
     </div>

@@ -5,18 +5,18 @@ import { db } from "../../../lib/firebase";
 import { Irish_Grover, Bree_Serif } from "next/font/google";
 
 const irishGrover = Irish_Grover({ weight: "400", subsets: ["latin"] });
-const breeSerif = Bree_Serif({ weight: "400", subsets: ["latin"] });
+const breeSerif   = Bree_Serif({ weight: "400", subsets: ["latin"] });
 
 const INITIAL_FORM = {
   name: "", age: "", species: "Dog", breed: "", gender: "", location: "",
-  headline: "", traits: "", medical: "", healthNotes: "", duration: "",
+  headline: "", traits: "", medical: "", duration: "",
   isUrgent: false, vetStatus: "", status: "available",
 };
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-const SPECIES_OPTIONS = ["Dog", "Cat", "Rabbit", "Bird", "Other"];
-const INDIAN_CITIES = ["Mumbai", "Pune", "Nashik", "Nagpur", "Thane", "Navi Mumbai", "Aurangabad", "Kolhapur", "Other"];
+const MAX_IMAGE_SIZE       = 5 * 1024 * 1024;
+const SPECIES_OPTIONS      = ["Dog", "Cat", "Rabbit", "Bird", "Other"];
+const INDIAN_CITIES        = ["Mumbai","Pune","Nashik","Nagpur","Thane","Navi Mumbai","Aurangabad","Kolhapur","Other"];
 
 function compressImage(file: File, maxWidth = 800, quality = 0.7): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -29,7 +29,7 @@ function compressImage(file: File, maxWidth = 800, quality = 0.7): Promise<strin
         if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext("2d");
-        if (!ctx) return reject(new Error("Canvas not supported"));
+        if (!ctx) return reject(new Error("Canvas error"));
         ctx.drawImage(img, 0, 0, w, h);
         resolve(canvas.toDataURL("image/jpeg", quality));
       };
@@ -45,19 +45,23 @@ type PetTab = "add" | "manage";
 
 export default function ShelterInventory() {
   const [activeTab, setActiveTab] = useState<PetTab>("add");
-  const [formData, setFormData] = useState({ ...INITIAL_FORM });
-  const [imageFile, setImageFile] = useState<File | null>(null);
+
+  // ── Add form state ──────────────────────────────────────────────────
+  const [formData, setFormData]     = useState({ ...INITIAL_FORM });
+  const [imageFile, setImageFile]   = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
-  const [statusMsg, setStatusMsg] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [statusMsg, setStatusMsg]   = useState("");
+  const [errors, setErrors]         = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Manage tab
-  const [pets, setPets] = useState<any[]>([]);
+  // ── Manage tab state ────────────────────────────────────────────────
+  const [pets, setPets]             = useState<any[]>([]);
   const [editingPet, setEditingPet] = useState<any | null>(null);
-  const [editNotes, setEditNotes] = useState("");
-  const [editUrgent, setEditUrgent] = useState(false);
-  const [savingPet, setSavingPet] = useState(false);
+  const [editForm, setEditForm]     = useState<any>({});
+  const [savingPet, setSavingPet]   = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
+  const [editImagePreview, setEditImagePreview] = useState<string>("");
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "pets"), (snap) => {
@@ -66,6 +70,7 @@ export default function ShelterInventory() {
     return () => unsub();
   }, []);
 
+  // ── Validation ──────────────────────────────────────────────────────
   const validate = (): boolean => {
     const e: Record<string, string> = {};
     if (!formData.name.trim()) e.name = "Pet name is required.";
@@ -83,19 +88,22 @@ export default function ShelterInventory() {
   const handleImageChange = async (ev: React.ChangeEvent<HTMLInputElement>) => {
     const file = ev.target.files?.[0] || null;
     if (!file) return;
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setErrors((p) => ({ ...p, image: "Only JPG, PNG, WEBP allowed." }));
-      return;
-    }
-    if (file.size > MAX_IMAGE_SIZE) {
-      setErrors((p) => ({ ...p, image: "Image must be under 5 MB." }));
-      return;
-    }
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) { setErrors((p) => ({ ...p, image: "Only JPG, PNG, WEBP allowed." })); return; }
+    if (file.size > MAX_IMAGE_SIZE) { setErrors((p) => ({ ...p, image: "Image must be under 5 MB." })); return; }
     setErrors((p) => { const n = { ...p }; delete n.image; return n; });
     setImageFile(file);
     try { setImagePreview(await compressImage(file)); } catch { setImagePreview(""); }
   };
 
+  const handleEditImageChange = async (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0] || null;
+    if (!file) return;
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type) || file.size > MAX_IMAGE_SIZE) return;
+    setEditImageFile(file);
+    try { setEditImagePreview(await compressImage(file)); } catch { setEditImagePreview(""); }
+  };
+
+  // ── Submit new pet ──────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate() || isSubmitting) return;
@@ -108,8 +116,8 @@ export default function ShelterInventory() {
         ...formData,
         image: imageUrl,
         isVaccinated: formData.vetStatus.includes("VACCINATED"),
-        isSpayed: formData.vetStatus.includes("SPAYED"),
-        isNeutered: formData.vetStatus.includes("NEUTERED"),
+        isSpayed:     formData.vetStatus.includes("SPAYED"),
+        isNeutered:   formData.vetStatus.includes("NEUTERED"),
         createdAt: new Date().toISOString(),
       });
       setStatusMsg("Pet added successfully! 🎉");
@@ -124,35 +132,67 @@ export default function ShelterInventory() {
     }
   };
 
+  // ── Open edit modal ─────────────────────────────────────────────────
   const openEdit = (pet: any) => {
     setEditingPet(pet);
-    setEditNotes(pet.healthNotes || "");
-    setEditUrgent(pet.isUrgent || false);
+    setEditImageFile(null);
+    setEditImagePreview("");
+    setEditForm({
+      name:      pet.name || "",
+      age:       pet.age || "",
+      species:   pet.species || "Dog",
+      breed:     pet.breed || "",
+      gender:    pet.gender || "",
+      location:  pet.location || "",
+      headline:  pet.headline || "",
+      traits:    pet.traits || "",
+      medical:   pet.medical || "",
+      duration:  pet.duration || "",
+      vetStatus: pet.vetStatus || "",
+      isUrgent:  pet.isUrgent || false,
+    });
   };
 
+  // ── Save edit ───────────────────────────────────────────────────────
   const saveEdit = async () => {
     if (!editingPet) return;
     setSavingPet(true);
     try {
+      let imageUrl = editingPet.image || "";
+      if (editImageFile) imageUrl = await compressImage(editImageFile, 800, 0.7);
+
       await updateDoc(doc(db, "pets", editingPet.id), {
-        healthNotes: editNotes,
-        isUrgent: editUrgent,
+        ...editForm,
+        image: imageUrl,
+        isVaccinated: editForm.vetStatus.includes("VACCINATED"),
+        isSpayed:     editForm.vetStatus.includes("SPAYED"),
+        isNeutered:   editForm.vetStatus.includes("NEUTERED"),
       });
       setEditingPet(null);
-    } catch (e) { console.error(e); }
+    } catch (err) { console.error("Save edit:", err); }
     setSavingPet(false);
+  };
+
+  // ── Delete pet ──────────────────────────────────────────────────────
+  const deletePet = async (petId: string, petName: string) => {
+    if (!window.confirm(`Delete ${petName}? This cannot be undone.`)) return;
+    setDeletingId(petId);
+    try { await deleteDoc(doc(db, "pets", petId)); }
+    catch (err) { console.error("Delete pet:", err); alert("Failed to delete. Check console."); }
+    setDeletingId(null);
   };
 
   const FieldError = ({ field }: { field: string }) =>
     errors[field] ? <p className="text-[#E22726] text-[11px] font-bold mt-1 ml-2">{errors[field]}</p> : null;
 
   const inputClass = "bg-[#F5F5EC] p-5 rounded-2xl outline-none border border-[#D9D9D9] focus:border-[#E22726] transition-all w-full";
+  const editInputClass = "w-full p-4 bg-white border-2 border-[#D9D9D9] rounded-2xl text-sm focus:border-[#E22726] outline-none";
 
   return (
     <main className={`min-h-screen bg-[#F5F5EC] text-[#1E1E1E] pb-20 pt-12 flex flex-col items-center ${breeSerif.className}`}>
       <div className="w-full max-w-3xl">
 
-        {/* Tabs */}
+        {/* ── Tabs ──────────────────────────────────────────────── */}
         <div className="flex gap-1 border-b-2 border-[#D9D9D9] mb-8">
           {(["add", "manage"] as PetTab[]).map((t) => (
             <button key={t} onClick={() => setActiveTab(t)}
@@ -162,7 +202,7 @@ export default function ShelterInventory() {
           ))}
         </div>
 
-        {/* ── ADD TAB ─────────────────────────────────────────── */}
+        {/* ══════════════ ADD TAB ══════════════════════════════════ */}
         {activeTab === "add" && (
           <div className="p-12 bg-white rounded-[3rem] border border-[#D9D9D9] shadow-xl">
             <header className="mb-10 text-center">
@@ -214,19 +254,8 @@ export default function ShelterInventory() {
                 onChange={(e) => setFormData({ ...formData, headline: e.target.value })} />
               <input type="text" placeholder="Traits (e.g. Friendly, Playful)" value={formData.traits} className={inputClass}
                 onChange={(e) => setFormData({ ...formData, traits: e.target.value })} />
-              <input type="text" placeholder="Medical Status" value={formData.medical} className={inputClass}
+              <input type="text" placeholder="Medical Record / Health Status" value={formData.medical} className={inputClass}
                 onChange={(e) => setFormData({ ...formData, medical: e.target.value })} />
-
-              <div>
-                <label className="ml-2 text-[13px] font-bold block mb-2">Health & Care Notes (shown to potential fosters)</label>
-                <textarea
-                  placeholder="e.g. Needs daily medication. Anxious around loud noises. Enjoys morning walks."
-                  value={formData.healthNotes}
-                  rows={3}
-                  className={inputClass + " resize-none normal-case tracking-normal"}
-                  onChange={(e) => setFormData({ ...formData, healthNotes: e.target.value })}
-                />
-              </div>
 
               <div className="flex flex-col gap-2">
                 <label className="ml-2 text-[13px] font-bold">Upload Pet Photo</label>
@@ -268,7 +297,7 @@ export default function ShelterInventory() {
           </div>
         )}
 
-        {/* ── MANAGE TAB ──────────────────────────────────────── */}
+        {/* ══════════════ MANAGE TAB ═══════════════════════════════ */}
         {activeTab === "manage" && (
           <div className="space-y-4">
             {pets.length === 0 ? (
@@ -278,22 +307,34 @@ export default function ShelterInventory() {
                 <div key={pet.id} className="bg-white rounded-[2rem] border-2 border-[#D9D9D9] p-6 flex gap-5 items-start">
                   <img src={pet.image || "/jonnie.png"} alt={pet.name}
                     className="w-20 h-20 rounded-2xl object-cover border-2 border-[#F5F5EC] flex-shrink-0" />
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-1">
                       <p className={`${irishGrover.className} text-2xl`}>{pet.name}</p>
-                      <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${pet.status === "fostered" ? "bg-blue-100 text-blue-600" : pet.isUrgent ? "bg-[#FCEAEB] text-[#E22726]" : "bg-green-100 text-green-600"}`}>
+                      <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                        pet.status === "fostered" ? "bg-blue-100 text-blue-600" :
+                        pet.isUrgent ? "bg-[#FCEAEB] text-[#E22726]" : "bg-green-100 text-green-600"
+                      }`}>
                         {pet.status === "fostered" ? "Fostered" : pet.isUrgent ? "Urgent" : "Available"}
                       </span>
                     </div>
-                    <p className="text-xs text-[#999] font-bold uppercase tracking-widest">{pet.species} · {pet.breed || "Mixed"} · {pet.location}</p>
-                    {pet.healthNotes && (
-                      <p className="text-xs text-[#666] mt-2 leading-relaxed">{pet.healthNotes}</p>
-                    )}
+                    <p className="text-xs text-[#999] font-bold uppercase tracking-widest">
+                      {pet.species} · {pet.breed || "Mixed"} · {pet.location}
+                    </p>
+                    {pet.medical && <p className="text-xs text-[#666] mt-1">{pet.medical}</p>}
                   </div>
-                  <button onClick={() => openEdit(pet)}
-                    className="flex-shrink-0 px-5 py-2 border-2 border-[#D9D9D9] rounded-xl text-[11px] font-bold uppercase tracking-widest hover:border-[#E22726] hover:text-[#E22726] transition">
-                    Edit Notes
-                  </button>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button onClick={() => openEdit(pet)}
+                      className="px-5 py-2 border-2 border-[#D9D9D9] rounded-xl text-[11px] font-bold uppercase tracking-widest hover:border-[#E22726] hover:text-[#E22726] transition">
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => deletePet(pet.id, pet.name)}
+                      disabled={deletingId === pet.id}
+                      className="px-5 py-2 border-2 border-red-200 text-red-500 rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition disabled:opacity-50"
+                    >
+                      {deletingId === pet.id ? "…" : "Delete"}
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -301,39 +342,121 @@ export default function ShelterInventory() {
         )}
       </div>
 
-      {/* ── Edit notes modal ────────────────────────────────── */}
+      {/* ══════════════ EDIT MODAL ════════════════════════════════ */}
       {editingPet && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className={`bg-[#F5F5EC] rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl ${breeSerif.className}`}>
-            <div className="flex items-center gap-3 mb-6">
-              <img src={editingPet.image || "/jonnie.png"} alt={editingPet.name} className="w-12 h-12 rounded-full object-cover" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className={`bg-[#F5F5EC] rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-y-auto max-h-[90vh] ${breeSerif.className}`}>
+            <div className="p-8 border-b-2 border-[#D9D9D9] flex items-center gap-4">
+              <img src={editImagePreview || editingPet.image || "/jonnie.png"} alt={editingPet.name}
+                className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" />
               <div>
-                <p className={`${irishGrover.className} text-2xl`}>{editingPet.name}</p>
-                <p className="text-[10px] text-[#999] font-bold uppercase tracking-widest">Edit Pet Details</p>
+                <p className={`${irishGrover.className} text-3xl`}>Edit {editingPet.name}</p>
+                <p className="text-[10px] text-[#999] font-bold uppercase tracking-widest">All fields editable</p>
+              </div>
+              <button onClick={() => setEditingPet(null)}
+                className="ml-auto text-gray-400 hover:text-[#E22726] text-xl font-bold w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center">
+                ✕
+              </button>
+            </div>
+
+            <div className="p-8 grid grid-cols-2 gap-5">
+              {/* Name */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#999]">Name</label>
+                <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className={editInputClass} />
+              </div>
+              {/* Species */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#999]">Species</label>
+                <select value={editForm.species} onChange={(e) => setEditForm({ ...editForm, species: e.target.value })}
+                  className={editInputClass + " appearance-none cursor-pointer"}>
+                  {SPECIES_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              {/* Age */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#999]">Age</label>
+                <input value={editForm.age} onChange={(e) => setEditForm({ ...editForm, age: e.target.value })} className={editInputClass} />
+              </div>
+              {/* Breed */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#999]">Breed</label>
+                <input value={editForm.breed} onChange={(e) => setEditForm({ ...editForm, breed: e.target.value })} className={editInputClass} />
+              </div>
+              {/* Gender */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#999]">Gender</label>
+                <input value={editForm.gender} onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })} className={editInputClass} />
+              </div>
+              {/* Location */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#999]">Location</label>
+                <select value={editForm.location} onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                  className={editInputClass + " appearance-none cursor-pointer"}>
+                  <option value="">Select City…</option>
+                  {INDIAN_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              {/* Duration */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#999]">Duration (days)</label>
+                <input value={editForm.duration} onChange={(e) => setEditForm({ ...editForm, duration: e.target.value })} className={editInputClass} />
+              </div>
+              {/* Vet Status */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#999]">Vet Status</label>
+                <select value={editForm.vetStatus} onChange={(e) => setEditForm({ ...editForm, vetStatus: e.target.value })}
+                  className={editInputClass + " appearance-none cursor-pointer"}>
+                  <option value="">None</option>
+                  <option value="SPAYED AND VACCINATED">Spayed & Vaccinated</option>
+                  <option value="NEUTERED AND VACCINATED">Neutered & Vaccinated</option>
+                  <option value="ONLY VACCINATED">Only Vaccinated</option>
+                </select>
+              </div>
+              {/* Headline — full width */}
+              <div className="flex flex-col gap-1 col-span-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#999]">Headline</label>
+                <input value={editForm.headline} onChange={(e) => setEditForm({ ...editForm, headline: e.target.value })} className={editInputClass} />
+              </div>
+              {/* Traits — full width */}
+              <div className="flex flex-col gap-1 col-span-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#999]">Traits</label>
+                <input value={editForm.traits} onChange={(e) => setEditForm({ ...editForm, traits: e.target.value })} className={editInputClass} />
+              </div>
+              {/* Medical Record — full width */}
+              <div className="flex flex-col gap-1 col-span-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#999]">Medical Record</label>
+                <input value={editForm.medical} onChange={(e) => setEditForm({ ...editForm, medical: e.target.value })} className={editInputClass} />
+              </div>
+              {/* Replace image */}
+              <div className="flex flex-col gap-1 col-span-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#999]">Replace Photo (optional)</label>
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleEditImageChange}
+                  className="bg-white p-3 rounded-2xl border-2 border-[#D9D9D9] text-sm cursor-pointer file:mr-3 file:py-1 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#E22726] file:text-white" />
+                {editImagePreview && (
+                  <div className="flex items-center gap-3 mt-2">
+                    <img src={editImagePreview} alt="New preview" className="w-16 h-16 rounded-xl object-cover border-2 border-[#D9D9D9]" />
+                    <span className="text-[11px] text-emerald-600 font-bold">New photo ready</span>
+                  </div>
+                )}
+              </div>
+              {/* Urgent toggle */}
+              <div className="col-span-2">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" checked={editForm.isUrgent} onChange={(e) => setEditForm({ ...editForm, isUrgent: e.target.checked })}
+                    className="w-5 h-5 accent-[#E22726]" />
+                  <span className="text-sm font-bold uppercase tracking-widest">Mark as Urgent</span>
+                </label>
               </div>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-[11px] font-bold uppercase tracking-widest mb-2">Health & Care Notes</label>
-              <textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={5}
-                className="w-full p-4 bg-white border-2 border-[#D9D9D9] rounded-2xl text-sm focus:border-[#E22726] outline-none resize-none"
-                placeholder="Medication schedules, behavioural notes, dietary requirements…" />
-            </div>
-
-            <div className="mb-6">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" checked={editUrgent} onChange={(e) => setEditUrgent(e.target.checked)} className="w-5 h-5 accent-[#E22726]" />
-                <span className="text-sm font-bold uppercase tracking-widest">Mark as Urgent</span>
-              </label>
-            </div>
-
-            <div className="flex gap-3">
+            <div className="p-8 pt-0 flex gap-3">
               <button onClick={() => setEditingPet(null)}
-                className="flex-1 py-3 border-2 border-[#D9D9D9] rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-gray-50 transition">
+                className="flex-1 py-4 border-2 border-[#D9D9D9] rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-gray-50 transition">
                 Cancel
               </button>
               <button onClick={saveEdit} disabled={savingPet}
-                className="flex-[2] py-3 bg-[#E22726] text-white rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-[#b31d1d] transition disabled:opacity-50">
+                className="flex-[2] py-4 bg-[#E22726] text-white rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-[#b31d1d] transition disabled:opacity-50 shadow-lg">
                 {savingPet ? "Saving…" : "Save Changes"}
               </button>
             </div>
