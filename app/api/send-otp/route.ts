@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
     const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
 
     if (!gmailUser || !gmailAppPassword) {
-      // ── Dev mode: print to terminal if env vars are missing ──────────────
       console.log("\n┌─────────────────────────────────┐");
       console.log(`│  OTP for ${email}`);
       console.log(`│  Code: ${code}`);
@@ -58,10 +57,9 @@ export async function POST(req: NextRequest) {
       `,
     };
 
-    // Send the email
     await transporter.sendMail(mailOptions);
-
     return NextResponse.json({ success: true });
+
   } catch (err) {
     console.error("send-otp error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
