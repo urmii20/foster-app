@@ -133,16 +133,16 @@ export default function PetModal({ isOpen, onClose, pet }: PetModalProps) {
               ) : (
                 <>
                   <button
-                    onClick={(e) => { e.stopPropagation(); setIsShelterModalOpen(true); }}
+                    onClick={(e) => { e.stopPropagation(); handleFosterClick(); }}
                     className="w-[260px] bg-[#FEA8B3]/68 text-[#FFFFFF] rounded-t-[1.25rem] text-[12px] uppercase hover:bg-[#E2455A]/70 transition"
                   >
-                    ABOUT SHELTER
+                    Foster {pet.name}
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleFosterClick(); }}
                     className="w-[260px] bg-[#E22726] text-white rounded-t-[1.25rem] text-[12px] uppercase hover:bg-[#A91E1E] transition"
                   >
-                    FOSTER ME
+                    Adoption enquiry
                   </button>
                 </>
               )}

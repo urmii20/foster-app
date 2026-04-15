@@ -494,7 +494,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleUserAuth} className="space-y-5">
           <div>
-            <label className="block text-[11px] uppercase tracking-widest font-bold mb-2 ml-1">
+            <label className="block text-[11px] text-black uppercase tracking-widest font-bold mb-2 ml-1">
               Email
             </label>
             <input
@@ -502,13 +502,13 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full p-4 bg-[#F5F5EC] border-2 border-[#D9D9D9] rounded-2xl text-sm focus:border-[#E22726] outline-none transition"
+              className="w-full p-4 bg-[#F5F5EC] border-2 border-[#D9D9D9] rounded-2xl text-sm text-black focus:border-[#E22726] outline-none transition"
               required
               autoComplete="email"
             />
           </div>
           <div>
-            <label className="block text-[11px] uppercase tracking-widest font-bold mb-2 ml-1">
+            <label className="block text-[11px] text-black uppercase tracking-widest font-bold mb-2 ml-1">
               Password
             </label>
             <input
@@ -516,7 +516,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full p-4 bg-[#F5F5EC] border-2 border-[#D9D9D9] rounded-2xl text-sm focus:border-[#E22726] outline-none transition"
+              className="w-full p-4 bg-[#F5F5EC] border-2 border-[#D9D9D9] rounded-2xl text-sm text-black focus:border-[#E22726] outline-none transition"
               required
               autoComplete={isSignUp ? "new-password" : "current-password"}
             />
