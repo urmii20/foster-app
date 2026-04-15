@@ -56,7 +56,6 @@ export default function FosterForm({ isOpen, onClose, pet }: any) {
 
   useEffect(() => { if (isOpen) { setStep(1); setIsSuccess(false); setDuplicateError(false); } }, [isOpen]);
 
-  // Auth check — if not logged in, close form and redirect to /login
   useEffect(() => {
     if (isOpen && !auth.currentUser) {
       onClose();
@@ -83,7 +82,6 @@ export default function FosterForm({ isOpen, onClose, pet }: any) {
     try {
       const userId = auth.currentUser!.uid;
 
-      /* ── FIX: check for duplicate application ────────────────────── */
       const dupQuery = query(
         collection(db, "foster_applications"),
         where("userId", "==", userId),
@@ -96,10 +94,11 @@ export default function FosterForm({ isOpen, onClose, pet }: any) {
         setIsSubmitting(false);
         return;
       }
-      /* ─────────────────────────────────────────────────────────────── */
 
+      // Updated to include auth.currentUser?.email
       await addDoc(collection(db, "foster_applications"), {
         ...formData,
+        email: auth.currentUser?.email || "",
         userId,
         petId: pet.id,
         petName: pet.name,
@@ -115,7 +114,6 @@ export default function FosterForm({ isOpen, onClose, pet }: any) {
     }
   };
 
-  /* ── Duplicate error screen ────────────────────────────────────── */
   if (duplicateError) return (
     <div className="fixed inset-0 z-[70] flex justify-end bg-black/60 backdrop-blur-md">
       <div className="w-full max-w-md bg-[#F5F5EC] h-full p-10 flex flex-col items-center justify-center text-center shadow-2xl">
