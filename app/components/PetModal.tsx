@@ -118,7 +118,7 @@ export default function PetModal({ isOpen, onClose, pet }: PetModalProps) {
                 <p className="text-[16px] uppercase tracking-wider text-[#1E1E1E]">{pet.headline}</p>
                 <p className="mt-2 text-[14px] uppercase tracking-[0.15em] text-[#1E1E1E]/60">{pet.traits}</p>
               </div>
-              <div className="mt-8 text-[14px] uppercase tracking-[0.1em] text-[#1E1E1E] leading-relaxed">
+              <div className="mt-8 text-[15px] uppercase tracking-[0.1em] text-[#1E1E1E] leading-relaxed">
                 {pet.medical && <p>{pet.medical}</p>}
                 <p>IDEAL FOSTER DURATION: {pet.duration}</p>
               </div>
@@ -134,13 +134,13 @@ export default function PetModal({ isOpen, onClose, pet }: PetModalProps) {
                 <>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleFosterClick(); }}
-                    className="w-[260px] bg-[#FEA8B3]/68 text-[#FFFFFF] rounded-t-[1.25rem] text-[12px] uppercase hover:bg-[#E2455A]/70 transition"
+                    className="w-[260px] bg-[#FEA8B3]/68 text-[#FFFFFF] rounded-t-[1.25rem] text-[15px] uppercase hover:bg-[#E2455A]/70 transition"
                   >
                     Foster {pet.name}
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleFosterClick(); }}
-                    className="w-[260px] bg-[#E22726] text-white rounded-t-[1.25rem] text-[12px] uppercase hover:bg-[#A91E1E] transition"
+                    className="w-[260px] bg-[#E22726] text-white rounded-t-[1.25rem] text-[15px] uppercase hover:bg-[#A91E1E] transition"
                   >
                     Adoption enquiry
                   </button>
@@ -193,10 +193,10 @@ export default function PetModal({ isOpen, onClose, pet }: PetModalProps) {
               </p>
 
               <div className="absolute bottom-0 left-0 right-0 h-[64px] flex justify-center gap-6">
-                <button className="w-[260px] bg-[#FEA8B3]/68 text-[#FFFFFF] rounded-t-[1.25rem] text-[12px] uppercase hover:bg-[#E2455A]/70 transition">
+                <button className="w-[260px] bg-[#FEA8B3]/68 text-[#FFFFFF] rounded-t-[1.25rem] text-[14git px] uppercase hover:bg-[#E2455A]/70 transition">
                   REQUIREMENTS
                 </button>
-                <button className="w-[260px] bg-[#E22726] text-white rounded-t-[1.25rem] text-[12px] uppercase hover:bg-[#A91E1E] transition">
+                <button className="w-[260px] bg-[#E22726] text-white rounded-t-[1.25rem] text-[14px] uppercase hover:bg-[#A91E1E] transition">
                   CONTACT US
                 </button>
               </div>
