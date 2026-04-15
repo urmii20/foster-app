@@ -35,9 +35,9 @@ export async function POST(req: NextRequest) {
 
     // Email content
     const mailOptions = {
-      from: `"Paw Shelter Mumbai" <${gmailUser}>`,
+      from: `"The Arc Animal Project" <${gmailUser}>`,
       to: email,
-      subject: "Your Verification Code — Paw Shelter",
+      subject: "Your Verification Code — The Arc Animal Project",
       html: `
         <div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;padding:40px 24px;background:#F5F5EC;">
           <h1 style="font-size:2rem;color:#1E1E1E;margin-bottom:8px;">Verify Your Email 🐾</h1>
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
           </div>
           <p style="color:#999;font-size:12px;">
             If you did not request this, ignore this email.<br/>
-            Paw Shelter Mumbai · Parel Road, Mumbai — 400 012
+            The Arc Animal Project · Parel Road, Mumbai — 400 012
           </p>
         </div>
       `,

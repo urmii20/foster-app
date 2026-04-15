@@ -46,6 +46,9 @@ export default function UserCalendar() {
   const [renewalRequested, setRenewalRequested] = useState(false);
   const [requestingRenewal, setRequestingRenewal] = useState(false);
   const [error, setError]                   = useState<string | null>(null);
+  const [monthOffset, setMonthOffset]       = useState(0);
+
+  // ── Fix: wait for Firebase Auth to resolve before querying ─────────
 
   // ── Fix: wait for Firebase Auth to resolve before querying ─────────
   useEffect(() => {
@@ -129,9 +132,10 @@ export default function UserCalendar() {
     setRequestingRenewal(false);
   };
 
-  // ── Calendar grid helpers ───────────────────────────────────────────
+ // ── Calendar grid helpers ───────────────────────────────────────────
   const getCalendarInfo = () => {
     const ref = fosterData?.startDate ? new Date(fosterData.startDate) : new Date();
+    ref.setMonth(ref.getMonth() + monthOffset); // Apply the month navigation offset
     const y = ref.getFullYear();
     const m = ref.getMonth();
     const daysInMonth = new Date(y, m + 1, 0).getDate();
@@ -140,6 +144,8 @@ export default function UserCalendar() {
     return {
       monthStr: MONTH_NAMES[m],
       yearStr: String(y),
+      monthNum: m,
+      yearNum: y,
       daysInMonth,
       blankStartDays: blank,
     };
@@ -227,12 +233,17 @@ export default function UserCalendar() {
         <div className="flex justify-between items-start mb-5 pl-8 pr-0 max-w-7xl mx-auto relative w-full">
 
           {/* Month + Year — original large display */}
-          <h1 className={`${irishGrover.className} text-8xl tracking-widest flex items-start gap-3`}>
-            {monthStr}
-            <span className="text-4xl leading-tight mt-1">
-              {yearStr.substring(0, 2)}<br />{yearStr.substring(2, 4)}
-            </span>
-          </h1>
+  
+          <div className="flex items-center gap-4">
+            <button onClick={() => setMonthOffset(o => o - 1)} className="text-4xl hover:text-white/70 transition-colors -mt-4">‹</button>
+            <h1 className={`${irishGrover.className} text-8xl tracking-widest flex items-start gap-3`}>
+              {monthStr}
+              <span className="text-4xl leading-tight mt-1">
+                {yearStr.substring(0, 2)}<br />{yearStr.substring(2, 4)}
+              </span>
+            </h1>
+            <button onClick={() => setMonthOffset(o => o + 1)} className="text-4xl hover:text-white/70 transition-colors -mt-4">›</button>
+          </div>
 
           {/* Centre: Day counter + streak badge ─────────────────── */}
           <div className="absolute left-1/2 -translate-x-1/2 top-5 flex flex-col items-center w-80">
@@ -280,15 +291,16 @@ export default function UserCalendar() {
               const totalRows   = totalCells / 7;
               const isLastCalRow = row === totalRows - 1;
 
-              // Build dateStr to check if this cell is today or start day
+              // Build dateStr to check if this cell is today, start day, or end day
               let isToday = false;
               let isStartDay = false;
+              let isEndDay = false;
               if (val) {
-                const { yearStr: y, monthStr: ms } = getCalendarInfo();
-                const mIdx = MONTH_NAMES.indexOf(ms);
-                const cellDate = `${y}-${String(mIdx + 1).padStart(2, "0")}-${String(val).padStart(2, "0")}`;
+                const { yearNum: y, monthNum: m } = getCalendarInfo();
+                const cellDate = `${y}-${String(m + 1).padStart(2, "0")}-${String(val).padStart(2, "0")}`;
                 isToday    = cellDate === todayStr;
                 isStartDay = cellDate === fosterData.startDate;
+                isEndDay   = cellDate === fosterData.endDate;
               }
 
               return (
@@ -305,6 +317,7 @@ export default function UserCalendar() {
                     <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold
                       ${isToday    ? "bg-[#E22726] text-white shadow-lg" :
                         isStartDay ? "bg-[#35D0E6] text-[#1A4B6B]" :
+                        isEndDay   ? "bg-[#FFC107] text-[#1E1E1E]" :
                         ""}
                     `}>
                       {val}

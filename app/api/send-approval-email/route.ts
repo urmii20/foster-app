@@ -82,14 +82,14 @@ export async function POST(req: NextRequest) {
           <p style="color: #666; font-size: 0.85rem;">Questions? Call us at <strong>${shelterPhone}</strong></p>
           <p style="color: #666; font-size: 0.85rem;">Mon–Sat · 9 AM – 6 PM IST</p>
           <p style="color: #999; font-size: 0.75rem; margin-top: 16px;">
-            Paw Shelter Mumbai · 47, Parel Road, Mumbai — 400 012, Maharashtra
+            The Arc Animal Project · 47, Parel Road, Mumbai — 400 012, Maharashtra
           </p>
         </div>
       </div>
     `;
 
     const mailOptions = {
-      from: `"Paw Shelter Mumbai" <${gmailUser}>`,
+      from: `"The Arc Animal Project" <${gmailUser}>`,
       to: toEmail,
       subject: `✅ Your Foster Application for ${petName} is Approved!`,
       html,
