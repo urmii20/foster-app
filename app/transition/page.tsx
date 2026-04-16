@@ -12,7 +12,7 @@ export default function IntermediaryPage() {
   // Optional: Automatically route to the next page after reading
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push("/dashboard"); // Un-comment and update when ready
+      router.push("/dashboard"); 
     }, 1500);
     return () => clearTimeout(timer);
   }, [router]);

@@ -79,7 +79,7 @@ export default function BlogsPage() {
       className={`min-h-screen w-full relative overflow-x-hidden ${breeSerif.className}`}
       style={{ backgroundColor: BG[active], transition: "background-color 0.5s" }}
     >
-      {/* ── Disk Navigation (UNCHANGED) ─────────────────────────── */}
+      {/* Disk Navigation  */}
       <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 20 }}>
         <motion.div
           className="absolute rounded-full pointer-events-none"

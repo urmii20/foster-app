@@ -80,7 +80,7 @@ export default function AboutPage() {
     <main className={`min-h-screen bg-[#F5F5EC] text-[#1E1E1E] ${breeSerif.className}`}>
       <Navbar />
 
-      {/* ── Hero ──────────────────────────────────────────────────── */}
+      {/* Hero  */}
       <section className="px-12 pt-4 pb-16">
         <span className="text-[#E22726] text-[11px] uppercase tracking-[0.3em] font-bold">
           Mumbai's Animal Shelter
@@ -98,7 +98,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── Stats ─────────────────────────────────────────────────── */}
+      {/* Stats */}
       <section className="px-12 py-12 bg-[#1E1E1E]">
         <div className="grid grid-cols-4 gap-6">
           {STATS.map((s) => (
@@ -110,7 +110,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── Mission ───────────────────────────────────────────────── */}
+      {/*  Mission  */}
       <section className="px-12 py-16 grid grid-cols-2 gap-12 items-center">
         <div>
           <span className="text-[#E22726] text-[11px] uppercase tracking-[0.3em] font-bold">Our Mission</span>
@@ -139,7 +139,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── Team ──────────────────────────────────────────────────── */}
+      {/*  Team  */}
       <section className="px-12 py-12 bg-white">
         <span className="text-[#E22726] text-[11px] uppercase tracking-[0.3em] font-bold">The People</span>
         <h2 className={`${irishGrover.className} text-5xl mt-2 mb-10`}>Our Team</h2>
@@ -157,7 +157,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── Contact ───────────────────────────────────────────────── */}
+      {/* Contact  */}
       <section className="px-12 py-16" id="contact">
         <div className="grid grid-cols-2 gap-16 max-w-5xl mx-auto">
           {/* Left: info */}

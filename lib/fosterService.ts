@@ -1,21 +1,6 @@
 import { collection, doc, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-/**
- * FIX LOG
- * ───────
- * M5  — Changed task date format from full ISO string (e.g.
- *        "2026-04-13T00:00:00.000Z") to YYYY-MM-DD string (e.g.
- *        "2026-04-13"). UserCalendar filters tasks by comparing
- *        `task.date === today.toISOString().split("T")[0]` — so
- *        the stored format MUST be YYYY-MM-DD to match.
- *
- * NEW — startDate in the foster doc is also stored as YYYY-MM-DD
- *        for consistency with how the Inbox page stores it.
- *
- * NEW — Added durationDays to the foster document (was already
- *        a parameter but never set on the doc in some flows).
- */
 
 type Task = {
   id: string;
@@ -27,7 +12,6 @@ type Task = {
 
 /**
  * Formats a Date object as a YYYY-MM-DD string.
- * This is the canonical date format used across the app.
  */
 function toDateString(date: Date): string {
   const y = date.getFullYear();

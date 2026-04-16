@@ -8,10 +8,10 @@ const breeSerif = Bree_Serif({ weight: "400", subsets: ["latin"] });
 const irishGrover = Irish_Grover({ weight: "400", subsets: ["latin"] });
 
 const STEPS = [
-  { step: "1", title: "APPLY",  desc: "FILL OUT A FORM" },
-  { step: "2", title: "REVIEW", desc: "WE CHECK COMPATIBILITY" },
-  { step: "3", title: "MEET",   desc: "VISIT & INTERACT" },
-  { step: "4", title: "FOSTER", desc: "TAKE THEM HOME" },
+  { step: "1", title: "APPLY",   desc: "FILL OUT A FORM" },
+  { step: "2", title: "REVIEW",  desc: "WE CHECK COMPATIBILITY" },
+  { step: "3", title: "MEET",    desc: "VISIT & INTERACT" },
+  { step: "4", title: "FOSTER",  desc: "TAKE THEM HOME" },
 ];
 
 interface PetModalProps {
@@ -20,15 +20,10 @@ interface PetModalProps {
   pet: any;
 }
 
-/**
- * Returns a single stamp image path based on vetStatus priority.
- * Spayed/Neutered > Vaccinated only.
- * This prevents multiple stamps stacking when a pet is both spayed and vaccinated.
- */
 function getSingleStamp(pet: any): string | null {
   const vs = (pet.vetStatus || "").toUpperCase();
-  if (vs.includes("SPAYED"))    return "/spayed.png";
-  if (vs.includes("NEUTERED"))  return "/neutered.png";
+  if (vs.includes("SPAYED"))     return "/spayed.png";
+  if (vs.includes("NEUTERED"))   return "/neutered.png";
   if (vs.includes("VACCINATED") || pet.isVaccinated) return "/vaccinated.png";
   return null;
 }
@@ -91,7 +86,6 @@ export default function PetModal({ isOpen, onClose, pet }: PetModalProps) {
             </div>
 
             <div className="absolute top-0 left-[42%] right-0 bottom-[80px] pl-12 pr-8 flex flex-col justify-center">
-              {/* Single stamp — only one image shown, no stacking */}
               {!isFlipped && stampSrc && (
                 <div className="absolute top-6 right-6 w-28 h-28 z-30 pointer-events-none">
                   <img
@@ -102,9 +96,7 @@ export default function PetModal({ isOpen, onClose, pet }: PetModalProps) {
                 </div>
               )}
 
-              <h2
-                className={`text-[64px] uppercase text-[#1E1E1E] leading-none tracking-tight pr-32 ${irishGrover.className}`}
-              >
+              <h2 className={`text-[64px] uppercase text-[#1E1E1E] leading-none tracking-tight pr-32 ${irishGrover.className}`}>
                 {pet.name}
               </h2>
               <div className="flex items-center gap-3 text-[14px] tracking-[0.15em] uppercase mt-5 text-[#1E1E1E]">
@@ -119,12 +111,11 @@ export default function PetModal({ isOpen, onClose, pet }: PetModalProps) {
                 <p className="mt-2 text-[14px] uppercase tracking-[0.15em] text-[#1E1E1E]/60">{pet.traits}</p>
               </div>
               <div className="mt-8 text-[15px] uppercase tracking-[0.1em] text-[#1E1E1E] leading-relaxed">
-                {pet.medical && <p>{pet.medical}</p>}
-                <p>IDEAL FOSTER DURATION: {pet.duration}</p>
+                {pet.medical && <p>MEDICAL RECORD: {pet.medical}</p>}
+                <p>IDEAL FOSTER DURATION: {pet.duration} days</p>
               </div>
             </div>
 
-            {/* Front bottom buttons */}
             <div className="absolute bottom-0 left-[42%] right-0 h-[80px] pl-12 pr-10 flex gap-4">
               {isFostered ? (
                 <div className="flex-1 flex items-center justify-center bg-gray-100 rounded-t-[1.25rem] text-gray-400 text-[12px] uppercase font-bold tracking-widest">
@@ -134,13 +125,13 @@ export default function PetModal({ isOpen, onClose, pet }: PetModalProps) {
                 <>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleFosterClick(); }}
-                    className="w-[260px] bg-[#FEA8B3]/68 text-[#FFFFFF] rounded-t-[1.25rem] text-[15px] uppercase hover:bg-[#E2455A]/70 transition"
+                    className="flex-1 bg-[#FEA8B3]/68 text-[#FFFFFF] rounded-t-[1.25rem] text-[15px] uppercase font-bold tracking-wider hover:bg-[#E2455A]/70 transition"
                   >
                     Foster {pet.name}
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleFosterClick(); }}
-                    className="w-[260px] bg-[#E22726] text-white rounded-t-[1.25rem] text-[15px] uppercase hover:bg-[#A91E1E] transition"
+                    onClick={(e) => { e.stopPropagation(); window.location.href = '/about#contact'; }}
+                    className="flex-1 bg-[#E22726] text-white rounded-t-[1.25rem] text-[15px] uppercase font-bold tracking-wider hover:bg-[#A91E1E] transition"
                   >
                     Adoption enquiry
                   </button>
@@ -151,55 +142,71 @@ export default function PetModal({ isOpen, onClose, pet }: PetModalProps) {
 
           {/* ══════════════════════════ BACK ══════════════════════════ */}
           <div
-            className={`absolute inset-0 bg-[#F5F5EC] rounded-[2.5rem] overflow-hidden shadow-2xl border border-[#D9D9D9] backface-hidden flex flex-col items-center justify-center ${breeSerif.className}`}
+            className={`absolute inset-0 bg-[#F5F5EC] rounded-[2.5rem] overflow-hidden shadow-2xl border border-[#D9D9D9] backface-hidden flex flex-col justify-between pt-12 ${breeSerif.className}`}
             style={{ transform: "rotateY(180deg)" }}
           >
-            <div className="w-full h-full flex flex-col items-center justify-center px-16 py-10 relative">
-              <p className="text-[12px] uppercase tracking-[0.3em] text-[#E22726] mb-2 font-bold">
-                About {pet.name}
-              </p>
-              <h2 className={`${irishGrover.className} text-5xl uppercase text-[#1E1E1E] mb-4`}>
-                {pet.headline || "Looking for a home"}
-              </h2>
-
-              <div className="w-full max-w-2xl border-t border-[#D9D9D9] my-6" />
-
-              <div className="flex justify-center gap-16 w-full text-[14px] uppercase tracking-[0.15em] text-[#1E1E1E] mb-8">
-                <div className="flex flex-col gap-3 text-left">
-                  <p>📍 LOCATION: {pet.location}</p>
-                  <p>🗓 DURATION: {pet.duration || "3-4 WEEKS"}</p>
+            {/* Top Section */}
+            <div className="flex flex-col items-center gap-3 w-full px-12">
+              <div className="flex items-center gap-4">
+                <h1 className={`${irishGrover.className} text-[38px] uppercase tracking-wider text-[#1E1E1E]`}>
+                  The Arc Animal Project
+                </h1>
+                <div className="flex items-center gap-1.5 text-2xl">
+                  <span className="text-[#FFC107]">★</span>
+                  <span className="text-[#FFC107]">★</span>
+                  <span className="text-[#FFC107]">★</span>
+                  <span className="text-[#FFC107]">★</span>
+                  <span className="text-[#D9D9D9]">★</span>
                 </div>
-                <div className="flex flex-col gap-3 text-left">
+              </div>
+              <p className="text-[12px] uppercase tracking-[0.2em] leading-relaxed text-[#1E1E1E]/80 text-center max-w-[70%]">
+                A Non-Profit Organization Dedicated To Rescuing, Rehabilitating, And Rehoming Animals In Need Since 2014.
+              </p>
+            </div>
+
+            {/* Grid Section */}
+            <div className="w-full px-24 mt-4">
+              <div className="border-t border-[#D9D9D9] py-8 flex justify-center gap-24 w-full text-[13px] uppercase tracking-[0.15em] text-[#1E1E1E] font-bold">
+                <div className="flex flex-col gap-4 text-left">
+                  <p><span className="text-[#E22726] mr-2">📍</span> LOCATION: {pet.location || "MUMBAI"}</p>
+                  <p><span className="text-[#1E1E1E]/40 mr-2">🗓</span> DURATION: {pet.duration} days</p>
+                </div>
+                <div className="flex flex-col gap-4 text-left">
                   <p>SUPPLIES PROVIDED</p>
                   <p>MEDICAL COVERED</p>
                 </div>
               </div>
+            </div>
 
-              <div className="flex w-full justify-between items-start text-center relative px-4">
-                <div className="absolute top-5 left-12 right-12 h-[1px] bg-[#D9D9D9]" />
+            {/* Steps Section */}
+            <div className="flex w-full justify-center items-start text-center relative px-20">
+              <div className="absolute top-[20px] left-[150px] right-[150px] h-[1px] bg-[#D9D9D9]" />
+              <div className="flex justify-between w-full max-w-[550px]">
                 {STEPS.map(({ step, title, desc }) => (
                   <div key={step} className="flex flex-col items-center bg-[#F5F5EC] px-4 z-10">
-                    <div className="w-10 h-10 rounded-full border-[1.5px] border-[#1E1E1E] flex items-center justify-center mb-4 text-[15px] bg-[#F5F5EC]">
+                    <div className="w-10 h-10 rounded-full border-[1.5px] border-[#1E1E1E] flex items-center justify-center mb-3 text-[15px] font-bold bg-[#F5F5EC]">
                       {step}
                     </div>
-                    <p className="text-[13px] uppercase tracking-widest mb-1">{title}</p>
-                    <p className="text-[11px] text-[#1E1E1E]/60 uppercase tracking-widest">{desc}</p>
+                    <p className="text-[12px] font-bold uppercase tracking-widest mb-1">{title}</p>
+                    <p className="text-[10px] text-[#1E1E1E]/60 uppercase tracking-widest whitespace-nowrap">{desc}</p>
                   </div>
                 ))}
               </div>
+            </div>
 
-              <p className="mt-8 text-[12px] uppercase tracking-[0.2em] text-[#1E1E1E]/40">
-                24/7 PET COORDINATION AVAILABLE FOR ALL FOSTERS
-              </p>
+            {/* 24/7 Text */}
+            <p className="text-center text-[11px] uppercase tracking-[0.2em] text-[#1E1E1E]/40 font-bold mt-4 mb-2">
+              24/7 Pet Coordination Available For All Fosters
+            </p>
 
-              <div className="absolute bottom-0 left-0 right-0 h-[64px] flex justify-center gap-6">
-                <button className="w-[260px] bg-[#FEA8B3]/68 text-[#FFFFFF] rounded-t-[1.25rem] text-[14git px] uppercase hover:bg-[#E2455A]/70 transition">
-                  REQUIREMENTS
-                </button>
-                <button className="w-[260px] bg-[#E22726] text-white rounded-t-[1.25rem] text-[14px] uppercase hover:bg-[#A91E1E] transition">
-                  CONTACT US
-                </button>
-              </div>
+            {/* Bottom Buttons */}
+            <div className="w-full flex justify-center gap-8 px-20 mt-auto">
+              <button className="w-[260px] h-[75px] bg-[#FFC0CB] text-white rounded-t-[1.5rem] text-[13px] font-bold uppercase tracking-widest hover:bg-[#FFB6C1] transition shadow-md">
+                REQUIREMENTS
+              </button>
+              <button className="w-[260px] h-[75px] bg-[#E22726] text-white rounded-t-[1.5rem] text-[13px] font-bold uppercase tracking-widest hover:bg-[#CC233B] transition shadow-md">
+                CONTACT US
+              </button>
             </div>
           </div>
         </div>

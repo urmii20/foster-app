@@ -59,7 +59,6 @@ export default function LandingPage() {
       >
        <svg viewBox="26 26 138.5 138.5" fill="none" xmlns="http://www.w3.org/2000/svg"
        className="w-full h-full absolute inset-0 -rotate-[57.5deg]">
-        {/* <circle cx="95.3236" cy="95.3236" r="69.0469" transform="rotate(-57.524 95.3236 95.3236)" fill="#FEA8B3"/> */}
         <path d="M27.0783 107.886C64.8444 74.3815 133.446 81.7922 123.5 158" stroke="#D9D9D9" strokeWidth="2"/>
         <path d="M83.8088 27.6873C79.3279 58.8754 117.904 103.531 162.736 84.2369" stroke="#D9D9D9" strokeWidth="2"/>
         <path d="M58.2392 153.567C113.414 107.242 129.072 81.6706 130.98 36.7438" stroke="#D9D9D9" strokeWidth="2"/>
