@@ -11,8 +11,7 @@ function formatAge(age: string | number): string {
   }
   return num === 1 ? "1 year old" : `${num} years old`;
 }
-
-export default function UrgentPetCard({ name, location, time, image }) {
+export default function UrgentPetCard({ name, location, time, image }: { name: string; location: string; time: string; image: string }) {
   return (
     <div className="min-w-[280px] w-[280px] shrink-0 flex flex-col rounded-[2rem] overflow-hidden bg-white border-2 border-[#D9D9D9] snap-start">
       <div className="relative h-[220px] w-full bg-gray-200">
